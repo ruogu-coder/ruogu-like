@@ -1,0 +1,262 @@
+package com.ruogu.thumb.controller;
+
+import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.stp.StpUtil;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.ruogu.thumb.common.pojo.CommonResult;
+import com.ruogu.thumb.common.pojo.PageResult;
+import com.ruogu.thumb.constant.UserConstant;
+import com.ruogu.thumb.model.dto.user.*;
+import com.ruogu.thumb.model.entity.User;
+import com.ruogu.thumb.model.enums.UserStatusEnum;
+import com.ruogu.thumb.model.vo.user.LoginUserVO;
+import com.ruogu.thumb.model.vo.user.UserSimpleVo;
+import com.ruogu.thumb.model.vo.user.UserVo;
+import com.ruogu.thumb.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+import static com.ruogu.thumb.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST_PARAMS;
+import static com.ruogu.thumb.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST_PARAM_ERROR;
+import static com.ruogu.thumb.common.exception.util.ServiceExceptionUtil.exception;
+
+/***
+ *@author ruogu
+ *@create 2025/4/18 13:45
+ **/
+@Tag(name = "管理后台-用户管理")
+@RestController
+@AllArgsConstructor
+@RequestMapping("/user")
+public class UserController {
+
+    private final UserService userService;
+
+
+    /**
+     * 用户注册
+     *
+     * @param userRegisterRequest 用户注册请求
+     * @return 注册结果
+     */
+    @PostMapping("/register")
+    @Operation(summary = "用户注册")
+    public CommonResult<Long> userRegister(@RequestBody UserRegisterReqDTO userRegisterRequest) {
+        if (userRegisterRequest == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        String userAccount = userRegisterRequest.getUserAccount();
+        String userPassword = userRegisterRequest.getUserPassword();
+        String checkPassword = userRegisterRequest.getCheckPassword();
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+            return null;
+        }
+        long result = userService.userRegister(userAccount, userPassword, checkPassword);
+        return CommonResult.success(result);
+    }
+
+    /**
+     * 用户登录
+     *
+     * @param userLoginReq 用户登录请求
+     * @return 登录结果
+     */
+    @PostMapping("/login")
+    @Operation(summary = "用户登录")
+    public CommonResult<LoginUserVO> userLogin(@RequestBody UserLoginReqDTO userLoginReq) {
+        if (userLoginReq == null) {
+            throw exception(BAD_REQUEST_PARAMS);
+        }
+        String userAccount = userLoginReq.getUserAccount();
+        String userPassword = userLoginReq.getUserPassword();
+        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
+            throw exception(BAD_REQUEST_PARAM_ERROR);
+        }
+        LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword);
+        return CommonResult.success(loginUserVO);
+    }
+
+
+    /**
+     * 获取当前登录的用户信息。
+     * 该接口不需要任何参数，通过调用userService的getLoginUser方法，
+     * 获取当前登录的用户对象，然后将其转换为LoginUserVO类型，
+     * 包装在CommonResult中返回。
+     *
+     * @return CommonResult<LoginUserVO> 包含当前登录用户信息的CommonResult对象。
+     */
+    @GetMapping("/get/login")
+    @Operation(summary = "获取当前登录用户")
+    public CommonResult<LoginUserVO> getLoginUser() {
+        // 从userService获取当前登录的用户
+        User user = userService.getLoginUser();
+        // 将User对象转换为LoginUserVO类型，并返回成功结果
+        return CommonResult.success(userService.getLoginUserVO(user));
+    }
+
+    /**
+     * 创建user
+     *
+     * @param userReqDTO user添加请求数据传输对象，包含新增User的信息
+     * @return 返回操作结果，其中包含新添加user的ID
+     */
+    @PostMapping("/add")
+    @Operation(summary = "创建用户")
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    public CommonResult<Long> addUser(@RequestBody UserSaveReqDTO userReqDTO) {
+        if (userReqDTO == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        // 调用服务层方法，添加，并获取添加结果
+        long result = userService.addUser(userReqDTO);
+        // 返回添加成功响应结果
+        return CommonResult.success(result);
+    }
+
+    @PutMapping("/update")
+    @Operation(summary = "更新用户信息")
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    public CommonResult<Boolean> updateUser(@RequestBody @Valid UserSaveReqDTO userReqDTO) {
+        // 检查传入的请求数据是否为空
+        if (userReqDTO == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        // 调用服务层方法，更新信息，并获取更新结果
+        boolean result = userService.updateUser(userReqDTO);
+        // 返回更新信息成功响应结果
+        return CommonResult.success(result);
+    }
+
+    @DeleteMapping("/delete")
+    @Operation(summary = "删除用户")
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    @Parameter(name = "id", description = "用户ID",required = true)
+    public CommonResult<Boolean> deleteUser(@RequestParam("id") Long id) {
+        // 检查传入的用户ID是否为空
+        if (id == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        // 调用服务层方法，删除用户，并获取删除结果
+        boolean result = userService.deleteUser(id);
+        // 返回删除用户成功响应结果
+        return CommonResult.success(result);
+    }
+
+    @GetMapping("/get")
+    @Operation(summary = "获取用户")
+    @Parameter(name = "id", description = "用户ID",required = true)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    public CommonResult<UserVo> getUser(@RequestParam("id") Long id) {
+        // 检查传入的用户ID是否为空
+        if (id == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        // 调用服务层方法，获取用户信息，并返回结果
+        return CommonResult.success(userService.getUserVO(userService.getById(id)));
+    }
+
+    @GetMapping("/get/vo")
+    @Operation(summary = "获取用户")
+    @Parameter(name = "id", description = "用户ID",required = true)
+    @SaCheckLogin
+    public CommonResult<UserSimpleVo> getUserVO(@RequestParam("id") Long id) {
+        // 检查传入的用户ID是否为空
+        if (id == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        User user = userService.getById(id);
+        // 调用服务层方法，获取用户信息，并返回结果
+        return CommonResult.success(userService.getSimpleUserVO(user));
+    }
+
+    @GetMapping("/page")
+    @Operation(summary = "分页获取用户列表")
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    public CommonResult<PageResult<UserVo>> getUserPage(UserPageReqDTO userPageReqDTO) {
+        // 调用服务层方法，获取用户分页信息，并返回结果
+        return CommonResult.success(userService.getUserPage(userPageReqDTO));
+    }
+
+    @PutMapping("/update/profile")
+    @Operation(summary = "修改个人信息")
+    @SaCheckLogin
+    public CommonResult<Boolean> updateProfile(@RequestBody UserProfileUpdateReqDTO userProfileUpdateReqDTO) {
+        // 检查传入的用户请求数据是否为空
+        if (userProfileUpdateReqDTO == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        // 调用服务层方法，更新用户信息，并获取更新结果
+        boolean result = userService.updateUserProfile(userProfileUpdateReqDTO);
+        // 返回更新用户信息成功响应结果
+        return CommonResult.success(result);
+    }
+
+    @DeleteMapping("/logout")
+    @Operation(summary = "注销")
+    @SaCheckLogin
+    public CommonResult<Boolean> logout() {
+        // 调用服务层方法，注销用户，并获取注销结果
+        StpUtil.logout();
+        // 返回注销用户成功响应结果
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "重置用户密码")
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    public CommonResult<Boolean> resetUserPassword(@RequestBody UserPasswordResetReqDTO userPasswordResetReqDTO) {
+        // 检查传入的用户请求数据是否为空
+        if (userPasswordResetReqDTO == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        // 调用服务层方法，重置用户密码，并获取重置结果
+        boolean result = userService.resetUserPassword(userPasswordResetReqDTO);
+        // 返回重置用户密码成功响应结果
+        return CommonResult.success(result);
+    }
+
+
+    @PostMapping("/update-password")
+    @Operation(summary = "修改密码")
+    @SaCheckLogin
+    public CommonResult<Boolean> updatePassword(@RequestBody UserPasswordUpdateReqDTO userPasswordUpdateReqDTO) {
+        if(userPasswordUpdateReqDTO == null){
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        return CommonResult.success(userService.updatePassword(userPasswordUpdateReqDTO));
+    }
+
+
+    @PutMapping("/update/status")
+    @Operation(summary = "冻结解冻用户")
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    @Parameters({
+            @Parameter(name = "id", description = "用户ID", required = true),
+            @Parameter(name = "status", description = "状态 0正常 1冻结", required = true)
+    })
+    public CommonResult<Boolean> updateUserStatus(@RequestParam("id") Long id, @RequestParam("status") Integer status) {
+        if (id == null || status == null) {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        if (UserStatusEnum.isNormal(status)) {
+            // 解冻用户
+            userService.update(new LambdaUpdateWrapper<User>().eq(User::getId, id).set(User::getUserStatus, UserStatusEnum.NORMAL.getValue()));
+        } else if (UserStatusEnum.isDisable(status)) {
+            // 冻结用户
+            userService.update(new LambdaUpdateWrapper<User>().eq(User::getId, id).set(User::getUserStatus, UserStatusEnum.DISABLE.getValue()));
+            // 将此用户踢下线
+            StpUtil.kickout(id);
+        } else {
+            return CommonResult.error(BAD_REQUEST_PARAMS);
+        }
+        return CommonResult.success(true);
+    }
+
+}
