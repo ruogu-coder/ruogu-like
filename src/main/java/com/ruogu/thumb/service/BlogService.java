@@ -1,7 +1,10 @@
 package com.ruogu.thumb.service;
 
-import com.ruogu.thumb.model.entity.Blog;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.ruogu.thumb.common.pojo.PageResult;
+import com.ruogu.thumb.model.dto.blog.BlogPageReqDTO;
+import com.ruogu.thumb.model.entity.Blog;
+import com.ruogu.thumb.model.vo.blog.BlogVO;
 
 /**
 * @author ruogu
@@ -10,4 +13,17 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface BlogService extends IService<Blog> {
 
+    /**
+     * 根据id获取博客信息
+     * @param id 博客ID
+     * @return 博客信息
+     */
+    BlogVO getBlogById(Long id);
+
+    /**
+     * 分页获取博客列表
+     * @param blogPageReqDTO 请求参数
+     * @return 博客分页信息
+     */
+    PageResult<BlogVO> getBlogPage(BlogPageReqDTO blogPageReqDTO);
 }

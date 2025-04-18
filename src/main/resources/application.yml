@@ -4,13 +4,11 @@ server:
   port: 8080
 
 spring:
+  profiles:
+    active: local
   application:
     name: ruogu-like
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ruogu_like?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+
 
 # 配置springdoc-openapi的相关属性
 springdoc:

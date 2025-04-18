@@ -49,8 +49,8 @@ public interface GlobalErrorCodeConstants {
     ErrorCode DELETE_FAIL = new ErrorCode(4224, "删除失败");
     ErrorCode USER_PASSWORD_ERROR =  new ErrorCode(4225, "原密码错误");
 
-    //
-
+    ErrorCode USER_LIKE_ERROR = new ErrorCode(4226, "您已点赞");
+    ErrorCode USER_UNLIKE_ERROR = new ErrorCode(4227, "您还未点赞");
 
     /**
      * 是否为服务端错误，参考 HTTP 5XX 错误码段

@@ -348,6 +348,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         return true;
     }
+
+    @Override
+    public User getUserInfoById(Long userId) {
+        return this.getById(userId);
+    }
 }
 
 
