@@ -8,6 +8,9 @@ import com.ruogu.thumb.model.vo.user.LoginUserVO;
 import com.ruogu.thumb.model.vo.user.UserSimpleVo;
 import com.ruogu.thumb.model.vo.user.UserVo;
 
+import java.util.Collection;
+import java.util.Map;
+
 /**
 * @author ruogu
 * @description 针对表【user(用户表)】的数据库操作Service
@@ -128,4 +131,11 @@ public interface UserService extends IService<User> {
      * @return 用户信息
      */
     User getUserInfoById(Long userId);
+
+    /**
+     * 根据用户ID集合获取用户信息集合
+     * @param collect 用户ID集合
+     * @return 用户map集合
+     */
+    Map<Long, User> getUserMapByIds(Collection<Long> collect);
 }

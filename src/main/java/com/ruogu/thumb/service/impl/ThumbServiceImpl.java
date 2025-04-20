@@ -9,10 +9,14 @@ import com.ruogu.thumb.model.entity.User;
 import com.ruogu.thumb.service.BlogService;
 import com.ruogu.thumb.service.ThumbService;
 import com.ruogu.thumb.service.UserService;
+import com.ruogu.thumb.util.RedisKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.Optional;
 
 import static com.ruogu.thumb.common.exception.enums.GlobalErrorCodeConstants.*;
 import static com.ruogu.thumb.common.exception.util.ServiceExceptionUtil.exception;
@@ -33,6 +37,8 @@ public class ThumbServiceImpl extends ServiceImpl<ThumbMapper, Thumb> implements
 
     private final TransactionTemplate transactionTemplate;
 
+    private final RedisTemplate<String, Object> redisTemplate;
+
 
     @Override
     public Boolean doThumb(ThumbLikeOrUnLikeDTO thumbLikeOrUnLikeDTO) {
@@ -46,10 +52,7 @@ public class ThumbServiceImpl extends ServiceImpl<ThumbMapper, Thumb> implements
         synchronized (loginUser.getId().toString().intern()) {
             return transactionTemplate.execute(status -> {
                 Long blogId = thumbLikeOrUnLikeDTO.getBlogId();
-                boolean exists = this.lambdaQuery()
-                        .eq(Thumb::getUserId, loginUser.getId())
-                        .eq(Thumb::getBlogId, blogId)
-                        .exists();
+                Boolean exists = this.isThumb(blogId, loginUser.getId());
                 if (exists) {
                     throw exception(USER_LIKE_ERROR);
                 }
@@ -61,12 +64,19 @@ public class ThumbServiceImpl extends ServiceImpl<ThumbMapper, Thumb> implements
                 Thumb thumb = new Thumb();
                 thumb.setUserId(loginUser.getId());
                 thumb.setBlogId(blogId);
-                return update && this.save(thumb);
+                boolean success = update && this.save(thumb);
+
+                // 点赞记录存入 Redis
+                if (success) {
+                    redisTemplate.opsForHash().put(RedisKeyUtil.getUserThumbKey(loginUser.getId()), blogId.toString(), thumb.getId());
+                }
+                // 更新成功才执行
+                return success;
+
             });
         }
 
     }
-
 
 
     @Override
@@ -84,11 +94,11 @@ public class ThumbServiceImpl extends ServiceImpl<ThumbMapper, Thumb> implements
             // 编程式事务
             return transactionTemplate.execute(status -> {
                 Long blogId = thumbLikeOrUnLikeDTO.getBlogId();
-                Thumb thumb = this.lambdaQuery()
-                        .eq(Thumb::getUserId, loginUser.getId())
-                        .eq(Thumb::getBlogId, blogId)
-                        .one();
-                if (thumb == null) {
+                Object rawThumbId = redisTemplate.opsForHash().get(RedisKeyUtil.getUserThumbKey(loginUser.getId()), blogId.toString());
+                Long thumbId = Optional.ofNullable(rawThumbId)
+                        .map(id -> Long.parseLong(id.toString())) // 转为字符串再解析
+                        .orElse(null);
+                if (thumbId == null) {
                     throw exception(USER_UNLIKE_ERROR);
                 }
                 boolean update = blogService.lambdaUpdate()
@@ -96,9 +106,21 @@ public class ThumbServiceImpl extends ServiceImpl<ThumbMapper, Thumb> implements
                         .setSql("thumb_count = thumb_count - 1")
                         .update();
 
-                return update && this.removeById(thumb.getId());
+                boolean success = update && this.removeById(thumbId);
+
+                // 点赞记录从 Redis 删除
+                if (success) {
+                    redisTemplate.opsForHash().delete(RedisKeyUtil.getUserThumbKey(loginUser.getId()), blogId.toString());
+                }
+                return success;
+
             });
         }
+    }
+
+    @Override
+    public Boolean isThumb(Long userId, Long blogId) {
+        return redisTemplate.opsForHash().hasKey(RedisKeyUtil.getUserThumbKey(userId), blogId.toString());
     }
 }
 

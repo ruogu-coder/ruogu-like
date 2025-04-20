@@ -6,18 +6,19 @@ import com.ruogu.thumb.common.pojo.PageResult;
 import com.ruogu.thumb.mapper.BlogMapper;
 import com.ruogu.thumb.model.dto.blog.BlogPageReqDTO;
 import com.ruogu.thumb.model.entity.Blog;
-import com.ruogu.thumb.model.entity.Thumb;
 import com.ruogu.thumb.model.entity.User;
 import com.ruogu.thumb.model.vo.blog.BlogVO;
 import com.ruogu.thumb.service.BlogService;
 import com.ruogu.thumb.service.ThumbService;
 import com.ruogu.thumb.service.UserService;
+import com.ruogu.thumb.util.RedisKeyUtil;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author ruogu
@@ -39,6 +40,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog>
     @Resource
     private BlogMapper blogMapper;
 
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
 
     @Override
     public BlogVO getBlogById(Long id) {
@@ -54,9 +58,61 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog>
         if (list == null || list.isEmpty()) {
             return PageResult.empty();
         }
+
         User loginUser = userService.getLoginUser();
-        List<BlogVO> blogList = list.stream().map(blog -> getBlogVO(blog, loginUser)).toList();
-        return new PageResult<>(blogList, blogPage.getTotal());
+        if (loginUser == null) {
+            return new PageResult<>(copyBlogListToVO(list, null, null), blogPage.getTotal());
+        }
+
+        List<Object> blogIds = list.stream()
+                .map(blog -> String.valueOf(blog.getId()))
+                .collect(Collectors.toList());
+
+        Map<Long, Boolean> thumbMap = getThumbStatusMap(loginUser.getId(), blogIds);
+
+        Set<Long> userIds = new HashSet<>(list.size());
+        // 去重用户ID并批量查询
+        list.forEach(blog -> userIds.add(blog.getUserId()));
+        Map<Long, User> userMap = userService.getUserMapByIds(userIds);
+        return new PageResult<>(copyBlogListToVO(list, thumbMap, userMap), blogPage.getTotal());
+    }
+
+    private Map<Long, Boolean> getThumbStatusMap(Long userId, List<Object> blogIds) {
+        Map<Long, Boolean> result = new HashMap<>(blogIds.size());
+        List<Boolean> thumbs = redisTemplate.opsForHash()
+                .multiGet(RedisKeyUtil.getUserThumbKey(userId), blogIds)
+                .stream()
+                .map(Objects::nonNull)
+                .toList();
+
+        for (int i = 0; i < thumbs.size(); i++) {
+            result.put(Long.parseLong(String.valueOf(blogIds.get(i))), thumbs.get(i));
+        }
+        return result;
+    }
+
+    private List<BlogVO> copyBlogListToVO(List<Blog> blogs, Map<Long, Boolean> thumbMap, Map<Long, User> userMap) {
+        return blogs.stream().map(blog -> {
+            BlogVO vo = new BlogVO();
+            vo.setId(blog.getId());
+            vo.setTitle(blog.getTitle());
+            vo.setCoverImg(blog.getCoverImg());
+            vo.setContent(blog.getContent());
+            vo.setThumbCount(blog.getThumbCount());
+            vo.setCreateTime(blog.getCreateTime());
+            vo.setUserId(blog.getUserId());
+            // 增强空安全判断
+            boolean hasThumb = thumbMap != null
+                    ? thumbMap.getOrDefault(blog.getId(), false)
+                    : false;
+            vo.setHasThumb(hasThumb);
+
+            if (userMap != null) {
+                User user = userMap.getOrDefault(blog.getUserId(), new User());
+                vo.setUserInfo(userService.getSimpleUserVO(user));
+            }
+            return vo;
+        }).collect(Collectors.toList());
     }
 
 
@@ -88,12 +144,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog>
     }
 
     private void setThumbStatus(BlogVO blogVO, Blog blog, Long loginUserId) {
-        boolean hasThumb = thumbService.lambdaQuery()
-                .eq(Thumb::getUserId, loginUserId)
-                .eq(Thumb::getBlogId, blog.getId())
-                .count() > 0;
-
-        blogVO.setHasThumb(hasThumb);
+        Boolean exist = thumbService.isThumb(blog.getId(), loginUserId);
+        blogVO.setHasThumb(exist);
     }
 
 

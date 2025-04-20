@@ -18,9 +18,14 @@ import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.ruogu.thumb.common.exception.enums.GlobalErrorCodeConstants.*;
@@ -352,6 +357,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User getUserInfoById(Long userId) {
         return this.getById(userId);
+    }
+
+    @Override
+    public Map<Long, User> getUserMapByIds(Collection<Long> collect) {
+        if (CollectionUtils.isEmpty(collect)) {
+            return Collections.emptyMap();
+        }
+        List<User> users = this.listByIds(collect);
+        return users.stream().collect(Collectors.toMap(User::getId, Function.identity()));
     }
 }
 
