@@ -5,7 +5,9 @@ import com.ruogu.thumb.common.pojo.PageResult;
 import com.ruogu.thumb.core.mapper.BaseMapperPlus;
 import com.ruogu.thumb.model.dto.blog.BlogPageReqDTO;
 import com.ruogu.thumb.model.entity.Blog;
+import org.apache.ibatis.annotations.Param;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -15,6 +17,14 @@ import java.util.Objects;
  * @Entity generator.domain.Blog
  */
 public interface BlogMapper extends BaseMapperPlus<Blog> {
+
+    /**
+     * 批量更新博客点赞数量
+     * @param countMap 博客ID -> 点赞数
+     */
+    void batchUpdateThumbCount(@Param("countMap") Map<Long, Long> countMap);
+
+
 
     /**
      * 分页查询博客信息

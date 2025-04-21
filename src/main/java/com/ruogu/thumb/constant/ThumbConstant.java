@@ -10,7 +10,7 @@ public interface ThumbConstant {
 
     String USER_INFO_KEY_PREFIX = "user:info:";
 
-
+    String TEMP_THUMB_KEY_PREFIX = "thumb:temp:%s";
 
 
 }

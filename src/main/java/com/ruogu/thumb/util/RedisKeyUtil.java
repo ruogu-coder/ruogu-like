@@ -25,4 +25,16 @@ public class RedisKeyUtil {
     public static String getUserInfoKey(Long userId) {
         return ThumbConstant.USER_INFO_KEY_PREFIX + userId;
     }
+
+
+    /**
+     * 获取 临时点赞记录 key
+     * @param time 时间
+     * @return 缓存key
+     */
+    public static String getTempThumbKey(String time) {
+        return ThumbConstant.TEMP_THUMB_KEY_PREFIX.formatted(time);
+    }
+
+
 }
