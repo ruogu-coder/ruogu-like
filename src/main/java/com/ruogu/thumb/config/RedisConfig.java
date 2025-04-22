@@ -1,7 +1,6 @@
 package com.ruogu.thumb.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -23,9 +22,9 @@ public class RedisConfig {
 
         // 使用 Jackson2JsonRedisSerializer 序列化值
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.activateDefaultTyping(
-                LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL);
+        // objectMapper.activateDefaultTyping(
+        //         LaissezFaireSubTypeValidator.instance,
+        //         ObjectMapper.DefaultTyping.NON_FINAL);
         Jackson2JsonRedisSerializer<Object> serializer =
                 new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
 

@@ -22,7 +22,7 @@
     </sql>
     <update id="batchUpdateThumbCount">
         UPDATE blog
-        SET thumbCount = thumbCount + CASE id
+        SET thumb_count = thumb_count + CASE id
         <foreach collection="countMap.entrySet()" item="value" index="key">
             WHEN #{key} THEN #{value}
         </foreach>

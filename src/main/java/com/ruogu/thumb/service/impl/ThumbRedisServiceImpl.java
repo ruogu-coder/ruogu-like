@@ -40,8 +40,8 @@ public class ThumbRedisServiceImpl extends ServiceImpl<ThumbMapper, Thumb> imple
 
     private String getTimeSlice() {
         DateTime nowDate = DateUtil.date();
-        // 获取当前时间最近的整数秒 例如: 10:05:03 -> 10:05:00
-        return DateUtil.format(nowDate, "HH:mm") + (DateUtil.second(nowDate) / 10) * 10;
+        int second = (DateUtil.second(nowDate) / 10) * 10;
+        return DateUtil.format(nowDate, "HH:mm:") + (second == 0 ? "00" : second);
     }
 
     private User validateRequestAndGetUser(ThumbLikeOrUnLikeDTO dto) {
@@ -59,7 +59,7 @@ public class ThumbRedisServiceImpl extends ServiceImpl<ThumbMapper, Thumb> imple
         // 获取时间
         String timeSlice = getTimeSlice();
         // 获取Redis的key
-        String userThumbKey = RedisKeyUtil.getUserInfoKey(loginUser.getId());
+        String userThumbKey = RedisKeyUtil.getUserThumbKey(loginUser.getId());
         String tempThumbKey = RedisKeyUtil.getTempThumbKey(timeSlice);
 
         // 执行Lua脚本
@@ -84,7 +84,7 @@ public class ThumbRedisServiceImpl extends ServiceImpl<ThumbMapper, Thumb> imple
         // 获取时间
         String timeSlice = getTimeSlice();
         // 获取Redis的key
-        String userThumbKey = RedisKeyUtil.getUserInfoKey(loginUser.getId());
+        String userThumbKey = RedisKeyUtil.getUserThumbKey(loginUser.getId());
         String tempThumbKey = RedisKeyUtil.getTempThumbKey(timeSlice);
 
         // 执行Lua脚本
@@ -92,7 +92,8 @@ public class ThumbRedisServiceImpl extends ServiceImpl<ThumbMapper, Thumb> imple
                 RedisLuaScriptConstant.UNTHUMB_SCRIPT,
                 Arrays.asList(tempThumbKey, userThumbKey),
                 loginUser.getId(),
-                blogId
+                blogId,
+                DateUtil.format(DateUtil.date(), "yyyy-MM-dd HH:mm:ss")
         );
         if (LuaStatusEnum.FAIL.getValue() == result) {
             throw exception(USER_UNLIKE_ERROR);

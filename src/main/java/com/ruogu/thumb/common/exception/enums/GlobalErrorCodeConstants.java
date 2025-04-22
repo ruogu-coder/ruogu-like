@@ -34,6 +34,7 @@ public interface GlobalErrorCodeConstants {
     // ========== 自定义错误段 ==========
     ErrorCode UNKNOWN = new ErrorCode(999, "未知错误");
     ErrorCode PASSWORD_NOT_MATCH = new ErrorCode(4001, "两次输入的密码不一致");
+    ErrorCode PASSWORD_ERROR = new ErrorCode(4000, "密码错误");
     ErrorCode PASSWORD_LENGTH_NOT_ENOUGH = new ErrorCode(4002, "密码长度不能小于8");
 
     ErrorCode USER_NAME_REPEAT = new ErrorCode(4091, "账号重复");

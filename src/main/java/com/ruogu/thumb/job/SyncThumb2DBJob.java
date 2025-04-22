@@ -5,12 +5,14 @@ package com.ruogu.thumb.job;
  * @Date 2025/4/21 23:41
  */
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.StrPool;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruogu.thumb.mapper.BlogMapper;
+import com.ruogu.thumb.model.dto.thumb.ThumbTempCacheDTO;
 import com.ruogu.thumb.model.entity.Thumb;
 import com.ruogu.thumb.model.enums.ThumbTypeEnum;
 import com.ruogu.thumb.service.ThumbService;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @Author ruogu
@@ -58,7 +61,7 @@ public class SyncThumb2DBJob {
             // 回到上一分钟
             nowDate = DateUtil.offsetMinute(nowDate, -1);
         }
-        String timeSlice = DateUtil.format(nowDate, "HH:mm:") + second;
+        String timeSlice = DateUtil.format(nowDate, "HH:mm:") + (second < 10 ? "0" + second : second);
         syncThumb2DBByDate(timeSlice);
         log.info("同步完成，当前时间片：{}", timeSlice);
     }
@@ -84,16 +87,19 @@ public class SyncThumb2DBJob {
             String[] userIdAndBlogId = userIdBlogId.split(StrPool.COLON);
             Long userId = Long.valueOf(userIdAndBlogId[0]);
             Long blogId = Long.valueOf(userIdAndBlogId[1]);
-            //
-            Integer thumbType = Integer.valueOf(allTempThumbMap.get(userIdBlogId).toString());
-            // -1 取消点赞，1 点赞
-            // {"type":1,time:'2025-01-01 00:00:00'}
+            // {"type":1,time:'2025-01-01 00:00:00'}  -1 取消点赞，1 点赞
             Object value = allTempThumbMap.get(userIdBlogId);
+            ThumbTempCacheDTO thumbTemp = BeanUtil.toBean(value, ThumbTempCacheDTO.class);
+            if (thumbTemp == null) {
+                continue;
+            }
+            Integer thumbType = Optional.ofNullable(thumbTemp.getType()).orElse(0);
 
             if (thumbType == ThumbTypeEnum.INCR.getValue()) {
                 Thumb thumb = new Thumb();
                 thumb.setUserId(userId);
                 thumb.setBlogId(blogId);
+                thumb.setCreateTime(DateUtil.parse(thumbTemp.getTime()));
                 thumbList.add(thumb);
             } else if (thumbType == ThumbTypeEnum.DECR.getValue()) {
                 // 拼接查询条件，批量删除
