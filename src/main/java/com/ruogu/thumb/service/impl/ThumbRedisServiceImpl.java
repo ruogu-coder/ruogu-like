@@ -28,7 +28,7 @@ import static com.ruogu.thumb.common.exception.util.ServiceExceptionUtil.excepti
  * @description 针对表【thumb(点赞记录表)】的数据库操作Service实现
  * @createDate 2025-04-18 13:36:53
  */
-@Service("thumbService")
+@Service("thumbServiceRedis")
 @Slf4j
 @RequiredArgsConstructor
 public class ThumbRedisServiceImpl extends ServiceImpl<ThumbMapper, Thumb> implements ThumbService {
