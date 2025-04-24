@@ -59,12 +59,12 @@ public class ThumbConsumer {
     @Transactional(rollbackFor = Exception.class)
     public void processBatch(List<Message<ThumbEvent>> messages) {
         log.info("ThumbConsumer processBatch: {}", messages.size());
-        for (Message<ThumbEvent> message : messages) {
-            log.info("message.getMessageId() = {}", message.getMessageId());
-        }
-        if (true) {
-            throw new RuntimeException("ThumbConsumer processBatch failed");
-        }
+        // for (Message<ThumbEvent> message : messages) {
+        //     log.info("message.getMessageId() = {}", message.getMessageId());
+        // }
+        // if (true) {
+        //     throw new RuntimeException("ThumbConsumer processBatch failed");
+        // }
         Map<Long, Long> countMap = new ConcurrentHashMap<>();
         List<Thumb> thumbs = new ArrayList<>();
 
