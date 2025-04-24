@@ -10,4 +10,8 @@ spring:
       port: 6379
       database: 0
       connect-timeout: 5000
-#      password:
+  pulsar:
+    client:
+      service-url: pulsar://192.168.44.128:6650
+    admin:
+      service-url: http://192.168.44.128:8080
