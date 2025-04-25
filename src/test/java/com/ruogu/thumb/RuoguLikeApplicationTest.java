@@ -8,8 +8,6 @@ import com.ruogu.thumb.common.pojo.CommonResult;
 import com.ruogu.thumb.model.dto.user.UserLoginReqDTO;
 import com.ruogu.thumb.model.dto.user.UserRegisterReqDTO;
 import com.ruogu.thumb.model.entity.User;
-import com.ruogu.thumb.service.BlogService;
-import com.ruogu.thumb.service.ThumbService;
 import com.ruogu.thumb.service.UserService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
@@ -25,8 +23,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,32 +40,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class RuoguLikeApplicationTest {
 
-
-    @Resource
-    private ThumbService thumbService;
-
     @Resource
     private UserService userService;
-
-    @Resource
-    private BlogService blogService;
 
     @Resource
     private MockMvc mockMvc;
 
     @Test
-    void contextLoads() {
-        System.out.println(thumbService.list());
-        System.out.println(userService.list());
-        System.out.println(blogService.list());
-    }
-
-    @Test
     void addUser() throws Exception {
-        int initCount = 500;
+        int initCount = 5000;
+        Set<String> hashSet = new HashSet<>(5000);
         for (int i = 0; i < initCount; i++) {
             // 生成随机用户账号
-            String userAccount = RandomUtil.randomString(6);
+            String userAccount = RandomUtil.randomString(8);
+            while (hashSet.contains(userAccount)){
+                userAccount = RandomUtil.randomString(8);
+            }
+            hashSet.add(userAccount);
             // 固定密码和确认密码
             String userPassword = "123456789";
 
