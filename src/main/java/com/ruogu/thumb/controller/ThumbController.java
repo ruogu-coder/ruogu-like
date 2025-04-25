@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,13 +25,13 @@ public class ThumbController {
 
     @PostMapping("/do")
     @Operation(summary = "点赞")
-    public CommonResult<Boolean> doThumb(ThumbLikeOrUnLikeDTO thumbLikeOrUnLikeDTO) {
+    public CommonResult<Boolean> doThumb(@RequestBody ThumbLikeOrUnLikeDTO thumbLikeOrUnLikeDTO) {
         return CommonResult.success(thumbService.doThumb(thumbLikeOrUnLikeDTO));
     }
 
     @PostMapping("/undo")
     @Operation(summary = "取消点赞")
-    public CommonResult<Boolean> undoThumb(ThumbLikeOrUnLikeDTO thumbLikeOrUnLikeDTO) {
+    public CommonResult<Boolean> undoThumb(@RequestBody ThumbLikeOrUnLikeDTO thumbLikeOrUnLikeDTO) {
         return CommonResult.success(thumbService.undoThumb(thumbLikeOrUnLikeDTO));
     }
 

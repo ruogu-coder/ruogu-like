@@ -4,7 +4,7 @@ spring:
 #    url: jdbc:mysql://localhost:3306/ruogu_like?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
 #    username: root
 #    password: 123456
-    url: jdbc:mysql://192.168.31.7:4000/ruogu_like
+    url: jdbc:mysql://192.168.31.56:4000/ruogu_like
     username: root
     password:
   data:
@@ -15,6 +15,6 @@ spring:
       connect-timeout: 5000
   pulsar:
     client:
-      service-url: pulsar://192.168.44.128:6650
+      service-url: pulsar://192.168.31.56:6650
     admin:
-      service-url: http://192.168.44.128:8080
+      service-url: http://192.168.31.56:8080
