@@ -1,9 +1,7 @@
 package com.ruogu.thumb.controller;
 
-import cn.dev33.satoken.annotation.SaCheckRole;
 import com.ruogu.thumb.common.pojo.CommonResult;
 import com.ruogu.thumb.common.pojo.PageResult;
-import com.ruogu.thumb.constant.UserConstant;
 import com.ruogu.thumb.model.dto.blog.BlogPageReqDTO;
 import com.ruogu.thumb.model.vo.blog.BlogVO;
 import com.ruogu.thumb.service.BlogService;
@@ -37,7 +35,6 @@ public class BlogController {
     }
     @GetMapping("/page")
     @Operation(summary = "分页获取博客列表")
-    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public CommonResult<PageResult<BlogVO>> getUserPage(BlogPageReqDTO blogPageReqDTO) {
         // 调用服务层方法，获取博客分页信息，并返回结果
         return CommonResult.success(blogService.getBlogPage(blogPageReqDTO));
