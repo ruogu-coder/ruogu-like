@@ -9,7 +9,7 @@ spring:
     password:
   data:
     redis:
-      host: localhost
+      host: 192.168.31.56
       port: 6379
       database: 0
       connect-timeout: 5000
@@ -18,3 +18,16 @@ spring:
       service-url: pulsar://192.168.31.56:6650
     admin:
       service-url: http://192.168.31.56:8080
+
+# 整合 Prometheus + Grafana
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    distribution:
+      percentiles:
+        http:
+          server:
+            requests: 0.5, 0.75, 0.9, 0.95, 0.99
